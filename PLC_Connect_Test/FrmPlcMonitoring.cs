@@ -44,7 +44,10 @@ namespace PLC_Connect_Test
 
         private void Timer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
-            SetMonitoringData(Data.Instance.DeviceLiveData, dgvMonitoring);
+            if (_protocolType == (int)EnumData.Protocol_Type.Modbus)
+            {
+                SetMonitoringData(Data.Instance.DeviceLiveData, dgvMonitoring);
+            }
         }
 
         private void InitPLCList()
@@ -92,6 +95,7 @@ namespace PLC_Connect_Test
             dgvMonitoring.Columns.Add("colRegister", "register");
             dgvMonitoring.Columns.Add("colValue", "value");
         }
+
         private void SetMonitoringData(Dictionary<string, string> data, DataGridView dgv)
         {
             try
@@ -177,7 +181,10 @@ namespace PLC_Connect_Test
                     // Disconnect
                     // 연결 다 끊고 초기화 하구
                     timer.Stop();
+                    _plcManager.Stop();
                     _loopCnt = 0;
+                    Data.Instance.DeviceLiveData.Clear();
+                    dgvMonitoring.Rows.Clear();
                     btnConnect.Text = "Connect";
                 }
             }

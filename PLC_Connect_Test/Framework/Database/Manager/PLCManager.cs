@@ -47,6 +47,10 @@ namespace PLC_Connect_Test.Framework.Database.Manager
             this.OuterPLCStart();
         }
 
+        public void Stop()
+        {
+            this.OuterPLCStop();
+        }
         public void MCProtocolInit(string key)
         {
             if (Data.Instance.PlcInfos != null)
@@ -74,6 +78,15 @@ namespace PLC_Connect_Test.Framework.Database.Manager
                 Thread.Sleep(10);
             }
 
+        }
+
+        public void OuterPLCStop()
+        {
+            foreach (string key in PlcList.Keys)
+            {
+                PlcList[key].Stop();
+                Thread.Sleep(10);
+            }
         }
 
         public void Mitsubishi_PLCdataEvt(Dictionary<string, OuterPlc> values)
