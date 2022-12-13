@@ -2,7 +2,11 @@
 {
     public class PlcDataResDto
     {
-        public string address { get; set; }
-        public string value { get; set; }
+        public int register { get; set; }
+        public string desc { get; set; }
+        public int dataType { get; set; }
+        public int value { get; set; }
+        public string readWrite { get; set; }
+        public string plcName { get; set; }
     }
 }

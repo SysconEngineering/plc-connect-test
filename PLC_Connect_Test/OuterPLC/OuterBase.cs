@@ -30,7 +30,7 @@ namespace PLC_Connect_Test.OuterPLC
             this.PORT = port;
         }
 
-        virtual public void AddPlc(int idx, string name, int plc_type)
+        virtual public void AddPlc(string name, int plc_type)
         {
         }
 

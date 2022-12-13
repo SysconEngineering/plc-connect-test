@@ -1,9 +1,8 @@
 ﻿using PLC_Connect_Test.Framework.Database.Manager;
-using PLC_Connect_Test.Model.EntityFramework;
+using PLC_Connect_Test.Model.DTO;
 using PLC_Connect_Test.Structure;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
 using System.Threading;
 
@@ -17,8 +16,9 @@ namespace PLC_Connect_Test.Interface.Communication
         private int _startAddress = 40001;
         private int _numInput = 0;
 
-        public Dictionary<int, TbPlcInfo> dicDeviceAddr = new Dictionary<int, TbPlcInfo>();
+        public Dictionary<int, PlcInfoResDto> dicDeviceAddr = new Dictionary<int, PlcInfoResDto>();
         public Dictionary<string, string> dicDeviceDataValue = new Dictionary<string, string>();
+        public List<int> _writeRegisterList = new List<int>();
         //public Dictionary<string, ModbusOuterPlc> dicDevice = new Dictionary<string, ModbusOuterPlc>();
 
         public string Ip { get; set; }
@@ -27,7 +27,7 @@ namespace PLC_Connect_Test.Interface.Communication
         public bool IsConnected { get => _client?.IsConnected ?? false; }
 
         public DateTime LastConnectTime { get; set; } = DateTime.Now;
-        public List<TbPlcInfo> PlcInfo { get; set; } = new List<TbPlcInfo>();
+        public List<PlcInfoResDto> PlcInfo { get; set; } = new List<PlcInfoResDto>();
         System.DateTime ICommunication.LastConnectTime { get => throw new System.NotImplementedException(); set => throw new System.NotImplementedException(); }
         #endregion
 
@@ -71,8 +71,11 @@ namespace PLC_Connect_Test.Interface.Communication
                     for (int i = 0; i < _numInput; i++)
                     {
                         var register = $"{_startAddress + i}";
-                        var targetDevice = PlcInfo?.FirstOrDefault(x => x.Dtl.FirstOrDefault(d => d.Address.ToString().Equals(register)) != null);
-                        var targetDeviceData = targetDevice?.Dtl.FirstOrDefault(x => x.Address.ToString().Equals(register));
+                        //var targetDevice = PlcInfo?.FirstOrDefault(x => x.Dtl.FirstOrDefault(d => d.Address.ToString().Equals(register)) != null);
+                        //var targetDeviceData = targetDevice?.Dtl.FirstOrDefault(x => x.Address.ToString().Equals(register));
+
+                        var targetDevice = PlcInfo;
+                        var targetDeviceData = Data.Instance.DeviceLiveData.FirstOrDefault(x => x.Key.Equals(register));
 
                         var data = $"{values[i * 2]}{values[i * 2 + 1]}";
                         int.TryParse(data, out var binary);
@@ -104,7 +107,15 @@ namespace PLC_Connect_Test.Interface.Communication
             throw new NotImplementedException();
         }
 
+        public void ExtractWriteRegister()
+        {
 
+            List<PlcDataResDto> writeRegister = Data.Instance.PlcInfo.data.FindAll(x => x.readWrite.Equals("W"));
+            foreach (PlcDataResDto data in writeRegister)
+            {
+                _writeRegisterList.Add(data.register);
+            }
+        }
         public void Start()
         {
             Console.WriteLine("CommunicationModbus start (IP:{0}, Port:{1})", Ip, Port);
@@ -112,9 +123,8 @@ namespace PLC_Connect_Test.Interface.Communication
                 return;
             _client = new ModbusTcpClient(Ip, Port);
 
-            var device = PlcInfo.FirstOrDefault(x => x.Ip == Ip);
-            device = SetDeviceData(device);
-            _numInput = device.Dtl.Count;
+            ExtractWriteRegister(); // Write Register 추출
+            _numInput = Data.Instance.PlcInfo.data.Count;
             _client.Start((ushort)_numInput, _startAddress);
 
             DataRead();
@@ -145,7 +155,14 @@ namespace PLC_Connect_Test.Interface.Communication
             {
                 if (_client?.IsConnected == true)
                 {
-                    //var device = Data.Instance.PlcInfos.Values.(x => x.Value.Ip == Ip);
+
+                    foreach (string key in Data.Instance.DeviceLiveData.Keys)
+                    {
+                        if (_writeRegisterList.Contains(Int32.Parse(key)))
+                        {
+                            DataWrite(key, "22");
+                        }
+                    }
                 }
             }
             catch (Exception ex)
@@ -157,31 +174,24 @@ namespace PLC_Connect_Test.Interface.Communication
         public void Stop()
         {
             _client.OnResponseData -= new ModbusTcpClient.ResponseData(OnResponseData);
-            _client = null;
-        }
-
-        public TbPlcInfo SetDeviceData(TbPlcInfo device)
-        {
-            device.Dtl = new BindingList<TbPlcInfoDtl>();
-            List<TbPlcInfoDtl> dtl = _db.PlcController.GetPlcInfoDtl(device.Idx);
-
-            if (dtl.Count > 0)
-            {
-                foreach (TbPlcInfoDtl d in dtl)
-                {
-                    if (d.Address != -1)
-                    {
-                        //dicDeviceAddr.Add(Int32.Parse(d.Register), d);
-                        device.Dtl.Add(d);
-                    }
-                }
-            }
-            return device;
+            _client.Stop();
         }
 
         public void DataWrite(string register, string value)
         {
-            throw new System.NotImplementedException();
+            if (ushort.TryParse(register, out var startAddress)
+                && byte.TryParse(value, out var values))
+            {
+                startAddress -= (ushort)_startAddress;
+                _client?.WriteSingleRegister(7, 0, startAddress, GetData(values));
+            }
+        }
+        private byte[] GetData(byte value)
+        {
+            byte[] data = new byte[2];
+            data[0] = 0;
+            data[1] = value;
+            return data;
         }
     }
 }

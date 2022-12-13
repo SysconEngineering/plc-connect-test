@@ -7,7 +7,7 @@
         public void Stop();
         public void Processiong();
 
-        public void AddPlc(int idx, string name, int plc_type);
+        public void AddPlc(string name, int plc_type);
 
         public void Write(string plc_name, string address, string data);
 

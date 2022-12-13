@@ -1,10 +1,13 @@
 ﻿
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using PLC_Connect_Test.Framework.Database.Manager;
+using PLC_Connect_Test.Model.DTO;
 using PLC_Connect_Test.Structure;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Linq;
+using System.IO;
 using System.Windows.Forms;
 using static PLC_Connect_Test.Structure.EnumData;
 
@@ -14,11 +17,12 @@ namespace PLC_Connect_Test
     {
         public DBManager _dbManager = new DBManager();
         PLCManager _plcManager = new PLCManager();
+        PlcInfoResDto _plcInfo = new PlcInfoResDto();
         System.Timers.Timer timer = new System.Timers.Timer();
         delegate void TimerEventDelegate(Dictionary<string, string> dic, DataGridView dgv);
 
-        private string _plcType = null;
-        private int _protocolType = 0;
+        private int _plcType = 0;
+        private int _protocolType = -1;
         private int _loopCnt = 0;
 
         public FrmPlcMonitoring()
@@ -30,13 +34,15 @@ namespace PLC_Connect_Test
         #region ## Initialize
         private void FrmPlcMonitoring_Shown(object sender, System.EventArgs e)
         {
-            Initialize();
+            //Initialize();
         }
 
         private void Initialize()
         {
-            InitPLCList();
+            ReadJsonFIle();
             SetMonitoringInitControl();
+            InitPLC();
+            SetPLCInfo();
             timer.Interval = 1000;
             // 주기마다 이벤트 실행
             timer.Elapsed += new System.Timers.ElapsedEventHandler(Timer_Elapsed);
@@ -44,41 +50,36 @@ namespace PLC_Connect_Test
 
         private void Timer_Elapsed(object sender, System.Timers.ElapsedEventArgs e)
         {
-            if (_protocolType == (int)EnumData.Protocol_Type.Modbus)
-            {
-                SetMonitoringData(Data.Instance.DeviceLiveData, dgvMonitoring);
-            }
+            SetMonitoringData(Data.Instance.DeviceLiveData, dgvMonitoring);
         }
 
-        private void InitPLCList()
+        private void InitPLC()
         {
-            Data.Instance.PlcInfos = null;
-            var plcInfos = _dbManager.PlcController.GetPlcInfos();
-            Data.Instance.PlcInfos = plcInfos.ToDictionary(x => x.PointName);
+            Data.Instance.PlcInfo = null;
+            Data.Instance.PlcInfo = _plcInfo;
             btnConnect.Enabled = false;
         }
 
         private void SetPLCInfo()
         {
-            var plcInfo = Data.Instance.PlcInfos.FirstOrDefault(x => x.Key.Equals(cbPlcList.SelectedItem));
-
-            tbName.Text = plcInfo.Value.PointName ?? "";
-            tbIp.Text = plcInfo.Value.Ip ?? "";
-            tbPort.Text = plcInfo.Value.Port.ToString() ?? "";
-            if (plcInfo.Value.PlcType == (int)PLC_Type.Mitusbishi)
+            tbName.Text = _plcInfo.name ?? "";
+            tbIp.Text = _plcInfo.ip;
+            tbPort.Text = _plcInfo.port.ToString() ?? "";
+            _plcType = _plcInfo.plcType;             // 0:Mitsubishi, 1:LS, 2:Siemens
+            if (_plcInfo.plcType == (int)PLC_Type.Mitusbishi)
             {
                 label4.Visible = true;
                 tbPlcType.Visible = true;
                 tbPlcType.Text = PLC_Type.Mitusbishi.ToString();
-                _plcType = PLC_Type.Mitusbishi.ToString();
+                _plcType = (int)PLC_Type.Mitusbishi;
             }
-            if (_protocolType != 0)
+            if (_protocolType != -1)
             {
                 if (_protocolType == (int)Protocol_Type.MC)
                 {
                     labelReadLoc.Visible = true;
                     tbReadLoc.Visible = true;
-                    tbReadLoc.Text = plcInfo.Value.ReadLoc;
+                    tbReadLoc.Text = _plcInfo.readLoc;
                 }
                 else
                 {
@@ -152,11 +153,6 @@ namespace PLC_Connect_Test
         #endregion
 
         #region ## Event
-        private void cbPlcList_SelectedIndexChanged(object sender, System.EventArgs e)
-        {
-            SetPLCInfo();
-        }
-
         private void btnConnect_Click(object sender, System.EventArgs e)
         {
             if (tbName.Text != "")
@@ -164,11 +160,11 @@ namespace PLC_Connect_Test
                 if (btnConnect.Text.Equals("Connect"))
                 {
                     // Connect
-                    if (rbMC.Checked)
+                    if (_protocolType == (int)EnumData.Protocol_Type.MC)
                     {
                         _plcManager.MCInit(tbName.Text);
                     }
-                    else if (rbModbus.Checked)
+                    else if (_protocolType == (int)EnumData.Protocol_Type.Modbus)
                     {
                         _plcManager.ModbusInit(tbName.Text);
                     }
@@ -180,12 +176,8 @@ namespace PLC_Connect_Test
                 {
                     // Disconnect
                     // 연결 다 끊고 초기화 하구
-                    timer.Stop();
-                    _plcManager.Stop();
-                    _loopCnt = 0;
-                    Data.Instance.DeviceLiveData.Clear();
-                    dgvMonitoring.Rows.Clear();
-                    btnConnect.Text = "Connect";
+                    Stop();
+
                 }
             }
             else
@@ -194,42 +186,65 @@ namespace PLC_Connect_Test
             }
 
         }
-        private void rbMC_CheckedChanged(object sender, System.EventArgs e)
+
+        private void Stop()
         {
-            cbPlcList.Items.Clear();
-            //MC 프로토콜
-            _protocolType = (int)EnumData.Protocol_Type.MC;
-            foreach (var plc in Data.Instance.PlcInfos)
-            {
-                if (plc.Value.ProjectIdx == _protocolType)
-                {
-                    cbPlcList.Items.Add(plc.Value.PointName);
-                }
-            }
-            btnConnect.Enabled = true;
+            timer.Stop();
+            _plcManager.Stop();
+            _loopCnt = 0;
+            Data.Instance.DeviceLiveData.Clear();
+            dgvMonitoring.Rows.Clear();
+            btnConnect.Text = "Connect";
         }
 
-        private void rbModbus_CheckedChanged(object sender, System.EventArgs e)
+        private void ReadJsonFIle()
         {
-            cbPlcList.Items.Clear();
-            _protocolType = (int)EnumData.Protocol_Type.Modbus;
-            foreach (var plc in Data.Instance.PlcInfos)
+            FileInfo fi = null;
+            if (_protocolType == (int)EnumData.Protocol_Type.Modbus)
             {
-                if (plc.Value.ProjectIdx == _protocolType)
+                fi = new FileInfo(Application.StartupPath + @"modbus_data.json");
+            }
+            else if (_protocolType == (int)EnumData.Protocol_Type.MC)
+            {
+                fi = new FileInfo(Application.StartupPath + @"mc_data.json");
+            }
+            string str = string.Empty;
+            string users = string.Empty;
+            if (fi.Exists)
+            {
+                using (StreamReader file = File.OpenText(fi.ToString()))
+                using (JsonTextReader reader = new JsonTextReader(file))
                 {
-                    cbPlcList.Items.Add(plc.Value.PointName);
+
+                    JObject json = (JObject)JToken.ReadFrom(reader);
+                    _plcInfo = JsonConvert.DeserializeObject<PlcInfoResDto>(json.ToString());
                 }
             }
+        }
+        private void cbProtType_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (cbProtType.SelectedItem.Equals(EnumData.Protocol_Type.Modbus.ToString()))
+            {
+                _protocolType = (int)EnumData.Protocol_Type.Modbus;
+            }
+            else if (cbProtType.SelectedItem.Equals(EnumData.Protocol_Type.MC.ToString()))
+            {
+                _protocolType = (int)EnumData.Protocol_Type.MC;
+            }
+            else if (cbProtType.SelectedItem.Equals(EnumData.Protocol_Type.OPC_UA.ToString()))
+            {
+
+            }
+            else
+            {
+
+            }
+            //Stop();
             btnConnect.Enabled = true;
+            Initialize();
         }
         #endregion
 
-        private void cbPlcList_Click(object sender, System.EventArgs e)
-        {
-            if (rbMC.Checked == false && rbModbus.Checked == false)
-            {
-                MessageBox.Show("프로토콜 타입을 선택해주세요!", "프로토콜 타입 선택 필요", MessageBoxButtons.OK);
-            }
-        }
+
     }
 }

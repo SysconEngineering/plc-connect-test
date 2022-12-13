@@ -23,12 +23,12 @@ namespace PLC_Connect_Test.Framework.Database.Manager
 
         public void ModbusProtocolInit(string key)
         {
-            if (Data.Instance.PlcInfos != null)
+            if (Data.Instance.PlcInfo != null)
             {
-                var plcInfo = Data.Instance.PlcInfos[key];
-                if (!PlcList.ContainsKey(plcInfo.Ip))
+                var plcInfo = Data.Instance.PlcInfo;
+                if (!PlcList.ContainsKey(plcInfo.ip))
                 {
-                    CommunicationModbus modbus = new CommunicationModbus(plcInfo.Ip, plcInfo.Port);
+                    CommunicationModbus modbus = new CommunicationModbus(plcInfo.ip, plcInfo.port);
                     if (!modbus.PlcInfo.Contains(plcInfo))
                     {
                         modbus.PlcInfo.Add(plcInfo);
@@ -53,15 +53,15 @@ namespace PLC_Connect_Test.Framework.Database.Manager
         }
         public void MCProtocolInit(string key)
         {
-            if (Data.Instance.PlcInfos != null)
+            if (Data.Instance.PlcInfo != null)
             {
-                var plcInfo = Data.Instance.PlcInfos[key];
-                if (!PlcList.ContainsKey(plcInfo.Ip))
+                var plcInfo = Data.Instance.PlcInfo;
+                if (!PlcList.ContainsKey(plcInfo.ip))
                 {
-                    Mitusbishi_Client_Socket plcSocket = new Mitusbishi_Client_Socket(plcInfo.Ip, plcInfo.Port, plcInfo.ReadLoc);
-                    plcSocket.AddPlc(plcInfo.Idx, plcInfo.PointName, plcInfo.PlcType);
+                    Mitusbishi_Client_Socket plcSocket = new Mitusbishi_Client_Socket(plcInfo.ip, plcInfo.port, plcInfo.readLoc);
+                    plcSocket.AddPlc(plcInfo.name, plcInfo.plcType);
                     plcSocket.PLCdataEvt += new Mitusbishi_Client_Socket.PLCDataResponse(Mitsubishi_PLCdataEvt);
-                    PlcList.Add(plcInfo.Ip, plcSocket);
+                    PlcList.Add(plcInfo.ip, plcSocket);
                 }
                 else
                 {
@@ -112,8 +112,8 @@ namespace PLC_Connect_Test.Framework.Database.Manager
                                 if (plc.info[i] != null)
                                 {
                                     PlcDataResDto val = new PlcDataResDto();
-                                    val.address = plc.info[i].addr;
-                                    val.value = plc.info[i].value;
+                                    val.register = Int32.Parse(plc.info[i].addr);
+                                    val.value = Int32.Parse(plc.info[i].value);
 
                                     valueList.Add(val);
                                 }

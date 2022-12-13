@@ -1,6 +1,7 @@
 ﻿using PLC_Connect_Test.Framework.Database.Manager;
 using PLC_Connect_Test.Interface;
-using PLC_Connect_Test.Model.EntityFramework;
+using PLC_Connect_Test.Model.DTO;
+using PLC_Connect_Test.Structure;
 using System;
 using System.Collections.Generic;
 using System.Globalization;
@@ -40,7 +41,7 @@ namespace PLC_Connect_Test.OuterPLC
 
         private DBManager _db = new DBManager();
 
-        public Dictionary<int, TbPlcInfoDtl> dicOuterPlcAddr = new Dictionary<int, TbPlcInfoDtl>();
+        public Dictionary<int, PlcDataResDto> dicOuterPlcAddr = new Dictionary<int, PlcDataResDto>();
         public Dictionary<string, byte> dicDeviceCode = new Dictionary<string, byte>();
         public Dictionary<string, OuterPlc> dicOuterPlc = new Dictionary<string, OuterPlc>();
         PLCProtocol PLCProtocolType = PLCProtocol.PT_QnA;
@@ -51,11 +52,12 @@ namespace PLC_Connect_Test.OuterPLC
             AREA = area;
         }
 
-        public override void AddPlc(int idx, string name, int plc_type)
+        public override void AddPlc(string name, int plc_type)
         {
             this.plc_type = plc_type;
 
-            List<TbPlcInfoDtl> dtls = _db.PlcController.GetPlcInfoDtl(idx);
+            //List<TbPlcInfoDtl> dtls = _db.PlcController.GetPlcInfoDtl(idx);
+            List<PlcDataResDto> dtls = Data.Instance.PlcInfo.data;
 
             if (!dicOuterPlc.ContainsKey(name))
             {
@@ -64,12 +66,12 @@ namespace PLC_Connect_Test.OuterPLC
 
             if (dtls.Count > 0)
             {
-                foreach (TbPlcInfoDtl dtl in dtls)
+                foreach (PlcDataResDto dtl in dtls)
                 {
-                    if (dtl.Address != -1)
+                    if (dtl.register != -1)
                     {
                         dtl.plcName = name;
-                        dicOuterPlcAddr.Add(dtl.Address, dtl);
+                        dicOuterPlcAddr.Add(dtl.register, dtl);
                     }
                 }
             }
@@ -147,7 +149,7 @@ namespace PLC_Connect_Test.OuterPLC
         public override void Write(string plc_name, string address, string value)
         {
             string addNum = Regex.Replace(address, @"\D", "");
-            SetPLCWord(plc_name, address, dicOuterPlcAddr[Convert.ToInt32(addNum)].DataType, value);
+            SetPLCWord(plc_name, address, dicOuterPlcAddr[Convert.ToInt32(addNum)].dataType, value);
         }
 
         public void onDataSocketInit()

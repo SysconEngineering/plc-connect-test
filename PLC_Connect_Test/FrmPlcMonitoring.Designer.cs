@@ -32,9 +32,8 @@
             this.panel1 = new System.Windows.Forms.Panel();
             this.dgvMonitoring = new System.Windows.Forms.DataGridView();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.cbProtType = new System.Windows.Forms.ComboBox();
             this.label5 = new System.Windows.Forms.Label();
-            this.rbModbus = new System.Windows.Forms.RadioButton();
-            this.rbMC = new System.Windows.Forms.RadioButton();
             this.lbConnectYn = new System.Windows.Forms.Label();
             this.groupBox3 = new System.Windows.Forms.GroupBox();
             this.tbReadLoc = new System.Windows.Forms.TextBox();
@@ -46,11 +45,10 @@
             this.tbName = new System.Windows.Forms.TextBox();
             this.label3 = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
-            this.label1 = new System.Windows.Forms.Label();
-            this.cbPlcList = new System.Windows.Forms.ComboBox();
             this.btnConnect = new System.Windows.Forms.Button();
             this.cbViewCount = new System.Windows.Forms.ComboBox();
             this.label6 = new System.Windows.Forms.Label();
+            this.listBox1 = new System.Windows.Forms.ListBox();
             this.groupBox1.SuspendLayout();
             this.panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgvMonitoring)).BeginInit();
@@ -91,13 +89,10 @@
             // 
             // groupBox2
             // 
+            this.groupBox2.Controls.Add(this.cbProtType);
             this.groupBox2.Controls.Add(this.label5);
-            this.groupBox2.Controls.Add(this.rbModbus);
-            this.groupBox2.Controls.Add(this.rbMC);
             this.groupBox2.Controls.Add(this.lbConnectYn);
             this.groupBox2.Controls.Add(this.groupBox3);
-            this.groupBox2.Controls.Add(this.label1);
-            this.groupBox2.Controls.Add(this.cbPlcList);
             this.groupBox2.Controls.Add(this.btnConnect);
             this.groupBox2.Font = new System.Drawing.Font("맑은 고딕", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point);
             this.groupBox2.Location = new System.Drawing.Point(579, 12);
@@ -107,45 +102,34 @@
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Connection";
             // 
+            // cbProtType
+            // 
+            this.cbProtType.FormattingEnabled = true;
+            this.cbProtType.Items.AddRange(new object[] {
+            "MC",
+            "Modbus",
+            "OPC_UA"});
+            this.cbProtType.Location = new System.Drawing.Point(71, 37);
+            this.cbProtType.Name = "cbProtType";
+            this.cbProtType.Size = new System.Drawing.Size(121, 23);
+            this.cbProtType.TabIndex = 8;
+            this.cbProtType.SelectedIndexChanged += new System.EventHandler(this.cbProtType_SelectedIndexChanged);
+            // 
             // label5
             // 
             this.label5.AutoSize = true;
-            this.label5.Location = new System.Drawing.Point(16, 32);
+            this.label5.Location = new System.Drawing.Point(16, 41);
             this.label5.Name = "label5";
             this.label5.Size = new System.Drawing.Size(54, 15);
             this.label5.TabIndex = 7;
             this.label5.Text = "Protocol";
-            // 
-            // rbModbus
-            // 
-            this.rbModbus.AutoSize = true;
-            this.rbModbus.Location = new System.Drawing.Point(134, 29);
-            this.rbModbus.Name = "rbModbus";
-            this.rbModbus.Size = new System.Drawing.Size(73, 19);
-            this.rbModbus.TabIndex = 6;
-            this.rbModbus.TabStop = true;
-            this.rbModbus.Text = "Modbus";
-            this.rbModbus.UseVisualStyleBackColor = true;
-            this.rbModbus.CheckedChanged += new System.EventHandler(this.rbModbus_CheckedChanged);
-            // 
-            // rbMC
-            // 
-            this.rbMC.AutoSize = true;
-            this.rbMC.Location = new System.Drawing.Point(78, 29);
-            this.rbMC.Name = "rbMC";
-            this.rbMC.Size = new System.Drawing.Size(45, 19);
-            this.rbMC.TabIndex = 5;
-            this.rbMC.TabStop = true;
-            this.rbMC.Text = "MC";
-            this.rbMC.UseVisualStyleBackColor = true;
-            this.rbMC.CheckedChanged += new System.EventHandler(this.rbMC_CheckedChanged);
             // 
             // lbConnectYn
             // 
             this.lbConnectYn.AutoSize = true;
             this.lbConnectYn.BackColor = System.Drawing.Color.Red;
             this.lbConnectYn.ForeColor = System.Drawing.Color.Red;
-            this.lbConnectYn.Location = new System.Drawing.Point(264, 66);
+            this.lbConnectYn.Location = new System.Drawing.Point(276, 42);
             this.lbConnectYn.Name = "lbConnectYn";
             this.lbConnectYn.Size = new System.Drawing.Size(15, 15);
             this.lbConnectYn.TabIndex = 4;
@@ -259,30 +243,10 @@
             this.label2.TabIndex = 0;
             this.label2.Text = "Name";
             // 
-            // label1
-            // 
-            this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(16, 67);
-            this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(52, 15);
-            this.label1.TabIndex = 2;
-            this.label1.Text = "PLC List";
-            // 
-            // cbPlcList
-            // 
-            this.cbPlcList.Font = new System.Drawing.Font("맑은 고딕", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-            this.cbPlcList.FormattingEnabled = true;
-            this.cbPlcList.Location = new System.Drawing.Point(73, 63);
-            this.cbPlcList.Name = "cbPlcList";
-            this.cbPlcList.Size = new System.Drawing.Size(105, 23);
-            this.cbPlcList.TabIndex = 1;
-            this.cbPlcList.SelectedIndexChanged += new System.EventHandler(this.cbPlcList_SelectedIndexChanged);
-            this.cbPlcList.Click += new System.EventHandler(this.cbPlcList_Click);
-            // 
             // btnConnect
             // 
             this.btnConnect.Font = new System.Drawing.Font("맑은 고딕", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
-            this.btnConnect.Location = new System.Drawing.Point(182, 60);
+            this.btnConnect.Location = new System.Drawing.Point(194, 36);
             this.btnConnect.Name = "btnConnect";
             this.btnConnect.Size = new System.Drawing.Size(79, 28);
             this.btnConnect.TabIndex = 0;
@@ -312,6 +276,15 @@
             this.label6.TabIndex = 3;
             this.label6.Text = "View";
             // 
+            // listBox1
+            // 
+            this.listBox1.FormattingEnabled = true;
+            this.listBox1.ItemHeight = 15;
+            this.listBox1.Location = new System.Drawing.Point(127, 52);
+            this.listBox1.Name = "listBox1";
+            this.listBox1.Size = new System.Drawing.Size(120, 94);
+            this.listBox1.TabIndex = 8;
+            // 
             // FrmPlcMonitoring
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
@@ -339,10 +312,8 @@
 
         private System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.GroupBox groupBox2;
-        private System.Windows.Forms.ComboBox cbPlcList;
         private System.Windows.Forms.Button btnConnect;
         private System.Windows.Forms.GroupBox groupBox3;
-        private System.Windows.Forms.Label label1;
         private System.Windows.Forms.Label label4;
         private System.Windows.Forms.TextBox tbPlcType;
         private System.Windows.Forms.TextBox tbPort;
@@ -352,14 +323,14 @@
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Label lbConnectYn;
         private System.Windows.Forms.Label label5;
-        private System.Windows.Forms.RadioButton rbModbus;
-        private System.Windows.Forms.RadioButton rbMC;
         private System.Windows.Forms.ComboBox cbViewCount;
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.Panel panel1;
         private System.Windows.Forms.DataGridView dgvMonitoring;
         private System.Windows.Forms.TextBox tbReadLoc;
         private System.Windows.Forms.Label labelReadLoc;
+        private System.Windows.Forms.ComboBox cbProtType;
+        private System.Windows.Forms.ListBox listBox1;
     }
 }
 

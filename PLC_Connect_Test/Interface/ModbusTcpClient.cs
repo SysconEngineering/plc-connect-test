@@ -130,7 +130,6 @@ namespace PLC_Connect_Test.Interface
 
             _id = 3;
             _unit = 0;
-            //_startAddress = (ushort)startAddr;
             _startAddress = 0;
             _numInputs = numInputs;
 
@@ -141,6 +140,13 @@ namespace PLC_Connect_Test.Interface
             }
             _connectCheckThread = new Thread(OnConnectCheck);
             _connectCheckThread.Start();
+        }
+
+        public void Stop()
+        {
+            _connectCheckThread.Abort();
+            _readDataThread.Abort();
+            _isConnected = false;
         }
         /// <summary>
         /// Robot InnerDevice ConnectionCheck
@@ -313,6 +319,7 @@ namespace PLC_Connect_Test.Interface
                 {
                     if (tcpAsyCl != null && tcpAsyCl.Connected)
                     {
+                        _startAddress -= _startAddress;     // 40001 == 0
                         ReadHoldingRegister(_id, _unit, _startAddress, _numInputs);
 
                         LastConnectTime = DateTime.Now.AddSeconds(_timeout);

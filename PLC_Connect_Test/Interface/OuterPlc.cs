@@ -1,4 +1,4 @@
-﻿using PLC_Connect_Test.Model.EntityFramework;
+﻿using PLC_Connect_Test.Model.DTO;
 using System;
 using System.Collections.Generic;
 
@@ -39,9 +39,9 @@ namespace PLC_Connect_Test.Interface
         public int start_addr;
         public bool docking = false;
         public Dictionary<int, OuterPlcInfo> info = new Dictionary<int, OuterPlcInfo>();
-        List<TbPlcInfoDtl> infoDtls = new List<TbPlcInfoDtl>();
+        List<PlcDataResDto> infoDtls = new List<PlcDataResDto>();
 
-        public OuterPlc(string name, string area, List<TbPlcInfoDtl> dtls)
+        public OuterPlc(string name, string area, List<PlcDataResDto> dtls)
         {
             this.name = name;
             this.area = area;
@@ -54,8 +54,8 @@ namespace PLC_Connect_Test.Interface
         {
             for (int i = 0; i < infoDtls.Count; i++)
             {
-                TbPlcInfoDtl dtl = infoDtls[i];
-                info.Add(i, new OuterPlcInfo(area + (dtl.Address), dtl.Desc, (OuterPlcInfo.PlcDataType)dtl.DataType));
+                PlcDataResDto dtl = infoDtls[i];
+                info.Add(i, new OuterPlcInfo(area + (dtl.register), dtl.desc, (OuterPlcInfo.PlcDataType)dtl.dataType));
             }
         }
     }
