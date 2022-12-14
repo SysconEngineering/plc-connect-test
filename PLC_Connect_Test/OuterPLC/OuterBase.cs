@@ -14,6 +14,7 @@ namespace PLC_Connect_Test.OuterPLC
         protected Thread ServerConnect_Checkthread;
         protected Thread DataRequestThread; // 데이터 요구 쓰레드
         protected Thread DataRecvThread;  //데이터 수신
+        protected Thread DataWriteThread; // 데이터 쓰기
         protected bool bConnectCheck = false;
         protected System.Net.Sockets.Socket clientsock_data = null;
         protected System.Net.Sockets.Socket dataSock = null;

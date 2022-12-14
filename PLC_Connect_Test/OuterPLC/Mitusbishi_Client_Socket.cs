@@ -20,6 +20,9 @@ namespace PLC_Connect_Test.OuterPLC
         public event StatusResponse StatusResult_Evt;
         public delegate void StatusResponse(string ip, bool conn, string message);
 
+        public event PLCDataRequest PLCWriteEvt;
+        public delegate void PLCDataRequest(string plcName, string register, string value);
+
         public event OuterPlcInfoDataEvt outerPlcInfoData_Evt;
         public delegate void OuterPlcInfoDataEvt(Dictionary<string, OuterPlc> values);
 
@@ -38,12 +41,14 @@ namespace PLC_Connect_Test.OuterPLC
         private string oldReadWord = "";
         private bool bSocketError = true;
         private bool _connectYn = false;
+        private string _plcName = "";
 
         private DBManager _db = new DBManager();
 
         public Dictionary<int, PlcDataResDto> dicOuterPlcAddr = new Dictionary<int, PlcDataResDto>();
         public Dictionary<string, byte> dicDeviceCode = new Dictionary<string, byte>();
         public Dictionary<string, OuterPlc> dicOuterPlc = new Dictionary<string, OuterPlc>();
+        public List<int> _writeRegisterList = new List<int>();
         PLCProtocol PLCProtocolType = PLCProtocol.PT_QnA;
 
         public Mitusbishi_Client_Socket(string ip, int port, string area)
@@ -55,7 +60,7 @@ namespace PLC_Connect_Test.OuterPLC
         public override void AddPlc(string name, int plc_type)
         {
             this.plc_type = plc_type;
-
+            _plcName = name;
             //List<TbPlcInfoDtl> dtls = _db.PlcController.GetPlcInfoDtl(idx);
             List<PlcDataResDto> dtls = Data.Instance.PlcInfo.data;
 
@@ -112,7 +117,47 @@ namespace PLC_Connect_Test.OuterPLC
                     LAST_ADDR = dicOuterPlcAddr.Keys.Max();
                 }
                 READ_CNT = LAST_ADDR - START_ADDR + 1;
+                ExtractWriteRegister();
                 onDataSocketInit();
+            }
+        }
+
+        public void ExtractWriteRegister()
+        {
+            List<PlcDataResDto> writeRegister = Data.Instance.PlcInfo.data.FindAll(x => x.readWrite.Equals("W"));
+            foreach (PlcDataResDto data in writeRegister)
+            {
+                _writeRegisterList.Add(data.register);
+            }
+        }
+
+        public void DataWrite()
+        {
+            while (true)
+            {
+                StreamData();
+            }
+        }
+
+        public void StreamData()
+        {
+            try
+            {
+                if (clientsock_data != null && clientsock_data.Connected)
+                {
+                    foreach (string key in Data.Instance.DeviceLiveData.Keys.ToList())
+                    {
+                        string register = key.Replace("R", "");
+                        if (_writeRegisterList.Contains(Int32.Parse(register)))
+                        {
+                            Write(_plcName, register, "99");
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+
             }
         }
 
@@ -139,6 +184,10 @@ namespace PLC_Connect_Test.OuterPLC
             {
                 DataRequestThread = null;
             }
+            if (DataWriteThread != null)
+            {
+                DataWriteThread = null;
+            }
         }
 
         public override string ToString()
@@ -148,8 +197,11 @@ namespace PLC_Connect_Test.OuterPLC
 
         public override void Write(string plc_name, string address, string value)
         {
-            string addNum = Regex.Replace(address, @"\D", "");
-            SetPLCWord(plc_name, address, dicOuterPlcAddr[Convert.ToInt32(addNum)].dataType, value);
+            if (clientsock_data != null)
+            {
+                string addNum = Regex.Replace(address, @"\D", "");
+                SetPLCWord(plc_name, address, dicOuterPlcAddr[Convert.ToInt32(addNum)].dataType, value);
+            }
         }
 
         public void onDataSocketInit()
@@ -200,17 +252,22 @@ namespace PLC_Connect_Test.OuterPLC
             ServerConnect_Checkthread.IsBackground = true;
             ServerConnect_Checkthread.Start();
 
-            // data recive 스레드 연결
+            // data recive 스레드 연결 (Read)
             DataRecvThread = new Thread(onDataRecvThread);
             DataRecvThread.Name = this.GetType().Name + ": onDataRecvThread";
             DataRecvThread.IsBackground = true;
             DataRecvThread.Start();
 
-            DataRequestThread = new Thread(onDataResponseThread);
+            // data request 스레드 연결 (Write)
+            DataRequestThread = new Thread(onDataRequestThread);
             DataRequestThread.Name = this.GetType().Name + ": onDataResponseThread";
             DataRequestThread.IsBackground = true;
             DataRequestThread.Start();
 
+            // 데이터 Write
+            DataWriteThread = new Thread(DataWrite);
+            DataWriteThread.IsBackground = true;
+            DataWriteThread.Start();
         }
 
         private void RunInitialize()
@@ -223,6 +280,7 @@ namespace PLC_Connect_Test.OuterPLC
             dicDeviceCode.Add("W", 0xB4);
             dicDeviceCode.Add("X", 0x9C);
 
+            // Word Count = 20
             wordGoodLen = 20;
             oldReadWord = "";
             ipep = new IPEndPoint(IPAddress.Parse(HOST), PORT);
@@ -271,7 +329,7 @@ namespace PLC_Connect_Test.OuterPLC
             }
         }
 
-        private void onDataResponseThread()
+        private void onDataRequestThread()
         {
             try
             {
@@ -363,7 +421,6 @@ namespace PLC_Connect_Test.OuterPLC
                                 tmpWord += newWord.Substring(4 * i, 2);
                                 binary = int.Parse(tmpWord, NumberStyles.HexNumber).ToString();
 
-                                //int addr = START_ADDR + (i - (i % WordCnt));
                                 int addr = START_ADDR + i;
                                 if (dicOuterPlcAddr.ContainsKey(addr))
                                 {
@@ -584,7 +641,6 @@ namespace PLC_Connect_Test.OuterPLC
                 return false;
             }
         }
-
         private string ASCIIToWord(string ascii)
         {
             string word;

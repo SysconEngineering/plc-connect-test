@@ -59,6 +59,4 @@ namespace PLC_Connect_Test.Interface
             }
         }
     }
-
-
 }

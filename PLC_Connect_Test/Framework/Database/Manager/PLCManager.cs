@@ -17,10 +17,12 @@ namespace PLC_Connect_Test.Framework.Database.Manager
         public event OuterPlcInfoDataEvt outerPlcInfoData_Evt;
         public delegate void OuterPlcInfoDataEvt(Dictionary<string, OuterPlc> values);
         public Dictionary<string, string> dicDeviceDataValue = new Dictionary<string, string>();
+        public List<int> _writeRegisterList = new List<int>();
 
         public void ModbusInit(string key)
         {
             this.ModbusProtocolInit(key);
+            ExtracctWriteRegister();
         }
 
         public void ModbusProtocolInit(string key)
@@ -104,7 +106,14 @@ namespace PLC_Connect_Test.Framework.Database.Manager
             PlcList.Clear();
             mPlcList.Clear();
         }
-
+        public void ExtracctWriteRegister()
+        {
+            List<PlcDataResDto> writeRegister = Data.Instance.PlcInfo.data.FindAll(x => x.readWrite.Equals("W"));
+            foreach (PlcDataResDto data in writeRegister)
+            {
+                _writeRegisterList.Add(data.register);
+            }
+        }
         public void Mitsubishi_PLCdataEvt(Dictionary<string, OuterPlc> values)
         {
             if (values != null)
