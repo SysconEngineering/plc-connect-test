@@ -89,6 +89,7 @@ namespace PLC_Connect_Test.Interface
 
         private bool _isConnectCheck = false;
         private bool _isConnected = false;
+        private bool _isStopBtn = false;
         private int _timeout = 10;
         public DateTime? LastConnectTime { get; set; } = new DateTime();
 
@@ -144,9 +145,12 @@ namespace PLC_Connect_Test.Interface
 
         public void Stop()
         {
-            _connectCheckThread.Abort();
-            _readDataThread.Abort();
+            _isConnectCheck = false;
             _isConnected = false;
+            _isStopBtn = true;
+            _connectCheckThread = null;
+            _dataClientSocket.Close();
+            _readDataThread = null;
         }
         /// <summary>
         /// Robot InnerDevice ConnectionCheck
@@ -231,8 +235,11 @@ namespace PLC_Connect_Test.Interface
         {
             try
             {
-                _dataClientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-                DataBeginConnect();
+                if (!_isStopBtn)
+                {
+                    _dataClientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+                    DataBeginConnect();
+                }
             }
             catch (Exception ex)
             {
@@ -250,6 +257,10 @@ namespace PLC_Connect_Test.Interface
 
                 LastConnectTime = DateTime.Now.AddSeconds(_timeout);
                 _dataClientSocket.BeginConnect(_ip, _port, new AsyncCallback(ConnectCallBackData), _dataClientSocket);
+                if (_isStopBtn)
+                {
+                    _dataClientSocket.Close();
+                }
             }
             catch (Exception ex)
             {

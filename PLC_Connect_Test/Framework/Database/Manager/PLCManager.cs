@@ -12,6 +12,7 @@ namespace PLC_Connect_Test.Framework.Database.Manager
     public class PLCManager
     {
         public Dictionary<string, IOuterPlc> PlcList = new Dictionary<string, IOuterPlc>();
+        public Dictionary<string, ICommunication> mPlcList = new Dictionary<string, ICommunication>();
 
         public event OuterPlcInfoDataEvt outerPlcInfoData_Evt;
         public delegate void OuterPlcInfoDataEvt(Dictionary<string, OuterPlc> values);
@@ -26,18 +27,17 @@ namespace PLC_Connect_Test.Framework.Database.Manager
             if (Data.Instance.PlcInfo != null)
             {
                 var plcInfo = Data.Instance.PlcInfo;
-                if (!PlcList.ContainsKey(plcInfo.ip))
+                if (!mPlcList.ContainsKey(plcInfo.ip))
                 {
                     CommunicationModbus modbus = new CommunicationModbus(plcInfo.ip, plcInfo.port);
                     if (!modbus.PlcInfo.Contains(plcInfo))
                     {
                         modbus.PlcInfo.Add(plcInfo);
+                        mPlcList.Add(plcInfo.ip, modbus);
                     }
                     modbus.Start();
                 }
                 else { Console.WriteLine("이미 연결된 PLC입니다."); }
-
-
             }
         }
 
@@ -72,21 +72,36 @@ namespace PLC_Connect_Test.Framework.Database.Manager
 
         public void OuterPLCStart()
         {
-            foreach (string key in PlcList.Keys)
+            if (PlcList != null)
             {
-                PlcList[key].Start();
-                Thread.Sleep(10);
+                foreach (string key in PlcList.Keys)
+                {
+                    PlcList[key].Start();
+                    Thread.Sleep(10);
+                }
             }
-
         }
 
         public void OuterPLCStop()
         {
-            foreach (string key in PlcList.Keys)
+            if (PlcList != null)
             {
-                PlcList[key].Stop();
-                Thread.Sleep(10);
+                foreach (string key in PlcList.Keys)
+                {
+                    PlcList[key].Stop();
+                    Thread.Sleep(10);
+                }
             }
+            if (mPlcList != null)
+            {
+                foreach (string key in mPlcList.Keys)
+                {
+                    mPlcList[key].Stop();
+                    Thread.Sleep(10);
+                }
+            }
+            PlcList.Clear();
+            mPlcList.Clear();
         }
 
         public void Mitsubishi_PLCdataEvt(Dictionary<string, OuterPlc> values)

@@ -57,7 +57,7 @@ namespace PLC_Connect_Test
         {
             Data.Instance.PlcInfo = null;
             Data.Instance.PlcInfo = _plcInfo;
-            btnConnect.Enabled = false;
+            //btnConnect.Enabled = false;
         }
 
         private void SetPLCInfo()
@@ -193,6 +193,7 @@ namespace PLC_Connect_Test
             _plcManager.Stop();
             _loopCnt = 0;
             Data.Instance.DeviceLiveData.Clear();
+            Data.Instance.PlcInfo = null;
             dgvMonitoring.Rows.Clear();
             btnConnect.Text = "Connect";
         }
