@@ -110,7 +110,6 @@ namespace PLC_Connect_Test
                 {
                     if (_loopCnt > 0)
                     {
-                        string curKey = dgv.Rows[0].Cells[0].FormattedValue.ToString();
                         foreach (var d in data)
                         {
                             bool updateYn = false;

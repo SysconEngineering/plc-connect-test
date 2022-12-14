@@ -127,20 +127,14 @@ namespace PLC_Connect_Test.Framework.Database.Manager
                             {
                                 if (plc.info[i] != null)
                                 {
-                                    PlcDataResDto val = new PlcDataResDto();
-                                    val.register = Int32.Parse(plc.info[i].addr);
-                                    val.value = Int32.Parse(plc.info[i].value);
-
-                                    valueList.Add(val);
-
-                                    if (dicDeviceDataValue.ContainsKey(val.register.ToString()))
+                                    if (dicDeviceDataValue.ContainsKey(plc.info[i].addr))
                                     {
-                                        dicDeviceDataValue[val.register.ToString()] = val.value.ToString();
+                                        dicDeviceDataValue[plc.info[i].addr] = plc.info[i].value;
                                     }
                                     else
                                     {
                                         //  없으면 신규 추가
-                                        dicDeviceDataValue.Add(val.register.ToString(), val.value.ToString());
+                                        dicDeviceDataValue.Add(plc.info[i].addr, plc.info[i].value);
                                     }
                                 }
                             }
