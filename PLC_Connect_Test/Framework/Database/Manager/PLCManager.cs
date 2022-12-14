@@ -16,6 +16,7 @@ namespace PLC_Connect_Test.Framework.Database.Manager
 
         public event OuterPlcInfoDataEvt outerPlcInfoData_Evt;
         public delegate void OuterPlcInfoDataEvt(Dictionary<string, OuterPlc> values);
+        public Dictionary<string, string> dicDeviceDataValue = new Dictionary<string, string>();
 
         public void ModbusInit(string key)
         {
@@ -131,8 +132,19 @@ namespace PLC_Connect_Test.Framework.Database.Manager
                                     val.value = Int32.Parse(plc.info[i].value);
 
                                     valueList.Add(val);
+
+                                    if (dicDeviceDataValue.ContainsKey(val.register.ToString()))
+                                    {
+                                        dicDeviceDataValue[val.register.ToString()] = val.value.ToString();
+                                    }
+                                    else
+                                    {
+                                        //  없으면 신규 추가
+                                        dicDeviceDataValue.Add(val.register.ToString(), val.value.ToString());
+                                    }
                                 }
                             }
+                            Data.Instance.DeviceLiveData = dicDeviceDataValue;
                         }
                         catch (Exception ex)
                         {
